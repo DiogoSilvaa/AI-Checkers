@@ -125,7 +125,7 @@ class Game:
             self.makeMove(move) #Make the move according to AI's choice
             print("Computer chooses ("+str(move.start)+", "+str(move.end)+")")
 
-            robot_move(move) # Robot moving routine
+            #robot_move(move) # Robot moving routine
          
         else:
             #If there is not any play available, AI input is not needed
@@ -234,10 +234,10 @@ class Game:
             return self.evaluation_function(state.board, state.player), state.board
         
         if state.player:
-            maxEval = float('-inf')
+            robotEval = float('-inf')
             best_move = None
+            
             for move in state.board.calcLegalMoves(state.player):
-                print("MINMAX:", move.start)
                 simState = copy.deepcopy(state)
                 self.simulate_move(move, simState)
                 if simState.player:
@@ -245,14 +245,16 @@ class Game:
                 else:
                     simState.player = 1
                 evaluation = self.minmax(simState, depth-1)[0] 
-                if maxEval < evaluation:
-                    maxEval = evaluation
+                if evaluation > robotEval:
+                    robotEval = evaluation
                     best_move = move 
-            return maxEval, best_move
+                return robotEval, best_move
+            
         
-        else: 
-            minEval = float('inf')
+        else:
+            humanEval = float('-inf')
             best_move = None
+            
             for move in state.board.calcLegalMoves(state.player):
                 simState = copy.deepcopy(state)
                 self.simulate_move(move, simState)
@@ -261,22 +263,16 @@ class Game:
                 else:
                     simState.player = 1
                 evaluation = self.minmax(simState, depth-1)[0]
-                if minEval > evaluation:
-                    minEval = evaluation 
+                if evaluation > humanEval:
+                    humanEval = evaluation 
                     best_move = move 
-            return minEval, best_move
+            return humanEval, best_move
+
+
+
 
     def simulate_move(self, move, state):        
         state.board.boardMove(move, state.player)
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
     # returns a utility value for a non-terminal node
     # f(x) = 5(player piece in end)+3(player not in end)-7(opp in end)-3(opp not in end)
@@ -321,7 +317,7 @@ class AB_Value:
         self.nodes = child_nodes
         self.max_cutoff = max_cutoff
         self.min_cutoff = min_cutoff
-         
+
 
 # wrapper for state used in alpha-beta
 class AB_State:
@@ -351,7 +347,10 @@ class Board:
         if (currWhite != []):
             self.currPos[1] = currWhite
         else:
-            self.currPos[1] = self.calcPos(1)   
+            self.currPos[1] = self.calcPos(1)
+        self.whiteKings = []
+        self.blackKings = []
+        
           
             
     def boardMove(self, move_info, currPlayer):
@@ -381,7 +380,9 @@ class Board:
         else:
             self.currPos[currPlayer].remove((move[0][0], move[0][1]))
             self.currPos[currPlayer].append((move[1][0], move[1][1]))
-  #      print(self.currPos[currPlayer])
+        self.checkKing(move[1], currPlayer)
+
+        
 
 
     def calcLegalMoves(self, player): # int array  -> [0] reg, [1] jump
@@ -424,8 +425,8 @@ class Board:
                         if not hasJumps:
                             hasJumps = True
                             legalMoves = []                        
-                        legalMoves.extend(jumps)
-                        
+                        legalMoves.extend(jumps)    
+                            
         return legalMoves
 
     # enemy in the square we plan to jump over
@@ -443,7 +444,6 @@ class Board:
                 temp = Move(cell, (cell[0]+next+next, cell[1]-2), True)
                 temp.jumpOver = [(cell[0]+next,cell[1]-1)]
                 # can has double jump?
-                helper = temp.end
                 if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
                     #enemy in top left of new square?
                     if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
@@ -492,6 +492,20 @@ class Board:
      #   for mov in jumps:
      #       print(str(mov.start)+" "+str(mov.end)+" Jump over: "+str(mov.jumpOver))
         return jumps
+    
+    
+    def checkKing(self, cell, player):
+       #cell[row,col]
+       boardLimit = 0 if player == 0 else BOARD_SIZE-1
+       if cell[0] == boardLimit:
+           self.currPos[player].remove(cell)
+           if player:
+               self.whiteKings.append(cell)
+               print("White kings: ", self.whiteKings)
+           else:
+               self.blackKings.append(cell)
+               print("Black kings: ", self.blackKings)
+       
     
     def calcPos(self, player):
         pos = []
