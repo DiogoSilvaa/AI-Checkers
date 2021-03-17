@@ -229,8 +229,8 @@ class Game:
             robotEval = float('-inf')
             best_move = None
             for move in board.calcLegalMoves(player):
-                board.boardMove(move, player)
-                evaluation = self.minmax(board, False, depth-1)[0] 
+                copy.deepcopy(board).boardMove(move, player)
+                evaluation = self.minmax(copy.deepcopy(board), False, depth-1)[0] 
                 if evaluation > robotEval:
                     robotEval = evaluation
                     best_move = move 
@@ -240,8 +240,8 @@ class Game:
             humanEval = float('-inf')
             best_move = None
             for move in board.calcLegalMoves(player):
-                board.boardMove(move, player)
-                evaluation = self.minmax(board, True, depth-1)[0]
+                copy.deepcopy(board).boardMove(move, player)
+                evaluation = self.minmax(copy.deepcopy(board), True, depth-1)[0]
                 if evaluation > humanEval:
                     humanEval = evaluation 
                     best_move = move 
