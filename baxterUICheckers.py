@@ -373,70 +373,49 @@ class Board:
         #White    
             if (len(self.currPos[player])>0):
                 #Regular pieces - Right
-                self.legalMovesRIGHT(self.currPos[player], downwards, legalMoves, hasJumps)
-            
-                #Regular pieces - Left
-                self.legalMovesLEFT(self.currPos[player], downwards, legalMoves, hasJumps)
-            
+                legalMoves = self.legalMoves(self.currPos[player], downwards, legalMoves, hasJumps)
+                        
             if (len(self.whiteKings)>0): 
-                #King pieces - Down Right
-                self.legalMovesRIGHT(self.whiteKings, downwards, legalMoves, hasJumps)
+                #King pieces - Down 
+                self.legalMoves(self.whiteKings, downwards, legalMoves, hasJumps)
+             
+                #King pieces - Up
+                self.legalMoves(self.whiteKings, upwards, legalMoves, hasJumps)
             
-                #King pieces - Down Left
-                self.legalMovesLEFT(self.whiteKings, downwards, legalMoves, hasJumps)
-            
-                #King pieces - Up Right
-                self.legalMovesRIGHT(self.whiteKings, upwards, legalMoves, hasJumps)
-            
-                #King pieces - Up Left
-                self.legalMovesLEFT(self.whiteKings, upwards, legalMoves, hasJumps)
+               #Append na lista e nao nos elementos
             
             
         else:
         #Black    
             if (len(self.currPos[player])>0):
-                #Regular pieces - Right
-                self.legalMovesRIGHT(self.currPos[player], upwards, legalMoves, hasJumps)
-            
-                #Regular pieces - Left
-                self.legalMovesLEFT(self.currPos[player], upwards, legalMoves, hasJumps)
-            
+                #Regular pieces
+                legalMoves = self.legalMoves(self.currPos[player], upwards, legalMoves, hasJumps)
+
             if (len(self.blackKings)>0): 
-                #King pieces - Down Right
-                self.legalMovesRIGHT(self.blackKings, upwards, legalMoves, hasJumps)
+                #King pieces - Down
+                self.legalMoves(self.blackKings, downwards, legalMoves, hasJumps)
             
-                #King pieces - Down Left
-                self.legalMovesLEFT(self.blackKings, upwards, legalMoves, hasJumps)
-            
-                #King pieces - Up Right
-                self.legalMovesRIGHT(self.blackKings, downwards, legalMoves, hasJumps)
-            
-                #King pieces - Up Left
-                self.legalMovesLEFT(self.blackKings, downwards, legalMoves, hasJumps)
+                #King pieces - Up
+                self.legalMoves(self.blackKings, upwards, legalMoves, hasJumps)
             
             
         return legalMoves
 
     
-    def legalMovesRIGHT(self, pieces, direction, legalMoves, hasJumps):
+    def legalMoves(self, pieces, direction, legalMoves, hasJumps):
         
         if direction:
-            #Limit is lower bound == White Player
-            boardLimit = BOARD_SIZE-1
+            boardLimit = BOARD_SIZE -1 
         else:
-            #Limit is upper bound == Black Player
             boardLimit = 0
         
         if direction:
-            #Downwards == White Player
             next = 1
         else:
-            #Upwards == Black Player
             next = -1
         
-        available_pieces = pieces
-        
-        for cell in available_pieces:
+        # cell refers to a position tuple (row, col)
+        for cell in pieces:
             if (cell[0] == boardLimit):
                 continue
             # diagonal right, only search if not at right edge of board
@@ -454,30 +433,6 @@ class Board:
                             hasJumps = True
                             legalMoves = []
                         legalMoves.extend(jumps)
-    
-    
-    
-    def legalMovesLEFT(self, pieces, direction, legalMoves, hasJumps):
-        
-        if direction:
-            #Limit is lower bound == White Player
-            boardLimit = BOARD_SIZE-1
-        else:
-            #Limit is upper bound == Black Player
-            boardLimit = 0
-        
-        if direction:
-            #Downwards == White Player
-            next = 1
-        else:
-            #Upwards == Black Player
-            next = -1
-        
-        available_pieces = pieces
-        
-        for cell in available_pieces:
-            if (cell[0] == boardLimit):
-                continue
             # diagonal left, only search if not at left edge of board
             if (cell[1]!=0):
                 if(self.boardState[cell[0]+next][cell[1]-1]==-1 and not hasJumps):
@@ -490,6 +445,8 @@ class Board:
                             hasJumps = True
                             legalMoves = []                        
                         legalMoves.extend(jumps)
+            
+        return legalMoves
     
         
     # enemy in the square we plan to jump over
