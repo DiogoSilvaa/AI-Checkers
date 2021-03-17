@@ -222,6 +222,9 @@ class Game:
     
     def minmax(self, board, player, depth):
        
+        
+       #ADD DEPTH == 0 + GAMEOVER == TRUE
+        
         if depth == 0:
             return self.evaluation_function(board, player), board
         
@@ -317,11 +320,11 @@ class Board:
         if (currBlack != []):
             self.currPos[0] = currBlack
         else:
-            self.currPos[0] = self.calcPos(0)
+            self.currPos[0] = self.calcPos(0, False)
         if (currWhite != []):
             self.currPos[1] = currWhite
         else:
-            self.currPos[1] = self.calcPos(1)
+            self.currPos[1] = self.calcPos(1, False)
         self.whiteKings = []
         self.blackKings = []
         
@@ -348,14 +351,25 @@ class Board:
         # update currPos array        
         # if its jump, the board could be in many configs, just recalc it
         if jump:
-            self.currPos[0] = self.calcPos(0)
-            self.currPos[1] = self.calcPos(1)
+            self.currPos[0] = self.calcPos(0, False)
+            self.currPos[1] = self.calcPos(1, False)
+            #self.whiteKings = self.calcPos(1, True)
+            #self.blackKings = self.calcPos(0, True)
         # otherwise change is predictable, so faster to just set it
         else:
-            self.currPos[currPlayer].remove((move[0][0], move[0][1]))
-            self.currPos[currPlayer].append((move[1][0], move[1][1]))
-        
-        #self.checkKing(move[1], currPlayer)
+            if move_info.start in self.currPos[currPlayer]:
+                self.currPos[currPlayer].remove((move[0][0], move[0][1]))
+                self.currPos[currPlayer].append((move[1][0], move[1][1])) 
+                
+            elif move_info.start in self.whiteKings:
+                self.whiteKings.remove((move[0][0], move[0][1]))
+                self.whiteKings.remove((move[1][0], move[1][1]))
+                
+            elif move_info.start in self.blackKings:
+                self.blackKings.remove((move[0][0], move[0][1]))
+                self.blackKings.remove((move[1][0], move[1][1]))
+                
+        self.checkKing(move[1], currPlayer)
 
         
 
@@ -373,7 +387,7 @@ class Board:
         #White    
             if (len(self.currPos[player])>0):
                 #Regular pieces - Right
-                legalMoves = self.legalMoves(self.currPos[player], downwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.currPos[player], downwards, legalMoves, hasJumps)
                         
             if (len(self.whiteKings)>0): 
                 #King pieces - Down 
@@ -381,15 +395,13 @@ class Board:
              
                 #King pieces - Up
                 self.legalMoves(self.whiteKings, upwards, legalMoves, hasJumps)
-            
-               #Append na lista e nao nos elementos
-            
+                        
             
         else:
         #Black    
             if (len(self.currPos[player])>0):
                 #Regular pieces
-                legalMoves = self.legalMoves(self.currPos[player], upwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.currPos[player], upwards, legalMoves, hasJumps)
 
             if (len(self.blackKings)>0): 
                 #King pieces - Down
@@ -446,7 +458,7 @@ class Board:
                             legalMoves = []                        
                         legalMoves.extend(jumps)
             
-        return legalMoves
+        return legalMoves, hasJumps
     
         
     # enemy in the square we plan to jump over
@@ -527,12 +539,20 @@ class Board:
                print("Black kings: ", self.blackKings)
        
     
-    def calcPos(self, player):
+    def calcPos(self, player, king):
         pos = []
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                if (self.boardState[row][col]==player):
-                    pos.append((row,col))
+        if king:
+            for row in range(BOARD_SIZE):
+                for col in range(BOARD_SIZE):
+                    if (self.boardState[row][col]==player):
+                        pos.append((row,col))
+        else:
+            for row in range(BOARD_SIZE):
+                for col in range(BOARD_SIZE):
+                    if (self.boardState[row][col]==player):
+                        pos.append((row,col))
+        
+            
         return pos
          
     def drawBoardState(self):
