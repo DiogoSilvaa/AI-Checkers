@@ -236,10 +236,10 @@ class Game:
         if state.player:
             robotEval = float('-inf')
             best_move = None
-            
-            for move in state.board.calcLegalMoves(state.player):
+            simBoard = copy.deepcopy(state.board)           
+            for move in simBoard.calcLegalMoves(state.player):
                 simState = copy.deepcopy(state)
-                self.simulate_move(move, simState)
+                simBoard.boardMove(move, simState.player)
                 if simState.player:
                     simState.player = 0
                 else:
@@ -250,14 +250,13 @@ class Game:
                     best_move = move 
                 return robotEval, best_move
             
-        
         else:
             humanEval = float('-inf')
             best_move = None
-            
-            for move in state.board.calcLegalMoves(state.player):
+            simBoard = copy.deepcopy(state.board)
+            for move in simBoard.calcLegalMoves(state.player):
                 simState = copy.deepcopy(state)
-                self.simulate_move(move, simState)
+                simBoard.boardMove(move, simState.player)
                 if simState.player:
                     simState.player = 0
                 else:
@@ -268,11 +267,6 @@ class Game:
                     best_move = move 
             return humanEval, best_move
 
-
-
-
-    def simulate_move(self, move, state):        
-        state.board.boardMove(move, state.player)
         
     # returns a utility value for a non-terminal node
     # f(x) = 5(player piece in end)+3(player not in end)-7(opp in end)-3(opp not in end)
