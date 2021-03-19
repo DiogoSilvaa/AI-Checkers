@@ -320,11 +320,11 @@ class Board:
         if (currBlack != []):
             self.currPos[0] = currBlack
         else:
-            self.currPos[0] = self.calcPos(0, False)
+            self.currPos[0] = self.calcPos(0, False, [])
         if (currWhite != []):
             self.currPos[1] = currWhite
         else:
-            self.currPos[1] = self.calcPos(1, False)
+            self.currPos[1] = self.calcPos(1, False, [])
         self.whiteKings = []
         self.blackKings = []
         
@@ -351,10 +351,10 @@ class Board:
         # update currPos array        
         # if its jump, the board could be in many configs, just recalc it
         if jump:
-            self.currPos[0] = self.calcPos(0, False)
-            self.currPos[1] = self.calcPos(1, False)
-            #self.whiteKings = self.calcPos(1, True)
-            #self.blackKings = self.calcPos(0, True)
+            self.currPos[0] = self.calcPos(0, False, move_info)
+            self.currPos[1] = self.calcPos(1, False, move_info)
+            #self.whiteKings = self.calcPos(1, True, move_info)
+            #self.blackKings = self.calcPos(0, True, move_info)
         # otherwise change is predictable, so faster to just set it
         else:
             if move_info.start in self.currPos[currPlayer]:
@@ -391,10 +391,10 @@ class Board:
                         
             if (len(self.whiteKings)>0): 
                 #King pieces - Down 
-                self.legalMoves(self.whiteKings, downwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.whiteKings, downwards, legalMoves, hasJumps)
              
                 #King pieces - Up
-                self.legalMoves(self.whiteKings, upwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.whiteKings, upwards, legalMoves, hasJumps)
                         
             
         else:
@@ -405,10 +405,10 @@ class Board:
 
             if (len(self.blackKings)>0): 
                 #King pieces - Down
-                self.legalMoves(self.blackKings, downwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.blackKings, downwards, legalMoves, hasJumps)
             
                 #King pieces - Up
-                self.legalMoves(self.blackKings, upwards, legalMoves, hasJumps)
+                legalMoves, hasJumps = self.legalMoves(self.blackKings, upwards, legalMoves, hasJumps)
             
             
         return legalMoves
@@ -539,18 +539,39 @@ class Board:
                print("Black kings: ", self.blackKings)
        
     
-    def calcPos(self, player, king):
+    def calcPos(self, player, king, move_info):
         pos = []
-        if king:
-            for row in range(BOARD_SIZE):
-                for col in range(BOARD_SIZE):
-                    if (self.boardState[row][col]==player):
-                        pos.append((row,col))
+        
+        if move_info != []:
+                
+            if player:
+                if move_info.start in self.whiteKings:
+                    for row in range(BOARD_SIZE):
+                        for col in range(BOARD_SIZE):
+                            if (self.boardState[row][col]==player):
+                                pos.append((row,col))
+                else:
+                    for row in range(BOARD_SIZE):
+                        for col in range(BOARD_SIZE):
+                            if (self.boardState[row][col]==player):
+                                pos.append((row,col))
+            else:
+                if move_info.start in self.blackKings:
+                    for row in range(BOARD_SIZE):
+                        for col in range(BOARD_SIZE):
+                            if (self.boardState[row][col]==player):
+                                pos.append((row,col))
+                else:
+                    for row in range(BOARD_SIZE):
+                        for col in range(BOARD_SIZE):
+                            if (self.boardState[row][col]==player):
+                                pos.append((row,col))
         else:
-            for row in range(BOARD_SIZE):
-                for col in range(BOARD_SIZE):
-                    if (self.boardState[row][col]==player):
-                        pos.append((row,col))
+                
+                    for row in range(BOARD_SIZE):
+                        for col in range(BOARD_SIZE):
+                            if (self.boardState[row][col]==player):
+                                pos.append((row,col))
         
             
         return pos
