@@ -179,7 +179,7 @@ class Game:
     def gameOver(self, board):
         # returns a boolean value determining if game finished
 
-        if (len(board.currPos[0]) + len(board.blackKings) == 0) or (len(board.currPos[1]) + len(board.whiteKings) == 0):
+        if (len(board.currPos[0])== 0) or (len(board.currPos[1]) == 0):
             # all pieces from one side captured
             return True
 
@@ -311,7 +311,7 @@ class Move:
             self.jumpOver = [] # array of pieces jumped over
     
 class Board:
-    def __init__(self, board=[], currBlack=[], currWhite=[]):
+    def __init__(self, board=[], currBlack=[], currWhite=[], kingBlack=[], kingWhite=[]):
         if (board!=[]):
             self.boardState = board     
         else:
@@ -320,16 +320,17 @@ class Board:
         if (currBlack != []):
             self.currPos[0] = currBlack
         else:
-            self.currPos[0] = self.calcPos(0, False, [])
+            self.currPos[0] = self.calcPos(0)
         if (currWhite != []):
             self.currPos[1] = currWhite
         else:
-            self.currPos[1] = self.calcPos(1, False, [])
-        self.whiteKings = []
-        self.blackKings = []
-        
-          
-            
+            self.currPos[1] = self.calcPos(1)
+        self.Kings = [[],[]]
+        if (kingBlack != 0):
+            self.Kings[0] = kingBlack
+        if (kingWhite != 0):
+            self.Kings[1] = kingWhite
+                      
     def boardMove(self, move_info, currPlayer):
         move = [move_info.start, move_info.end]
         #print("Move:", move)
@@ -338,7 +339,8 @@ class Board:
         #remove = move_info.jumpOver
         jump = move_info.jump      
         
-        # start by making old space empty
+        
+        # start by making old space empty                    
         self.boardState[move[0][0]][move[0][1]] = -1
         # then set the new space to player who moved
         self.boardState[move[1][0]][move[1][1]] = currPlayer
@@ -351,26 +353,20 @@ class Board:
         # update currPos array        
         # if its jump, the board could be in many configs, just recalc it
         if jump:
-            self.currPos[0] = self.calcPos(0, False, move_info)
-            self.currPos[1] = self.calcPos(1, False, move_info)
-            #self.whiteKings = self.calcPos(1, True, move_info)
-            #self.blackKings = self.calcPos(0, True, move_info)
+            self.currPos[0] = self.calcPos(0)
+            self.currPos[1] = self.calcPos(1)
         # otherwise change is predictable, so faster to just set it
         else:
-            if move_info.start in self.currPos[currPlayer]:
-                self.currPos[currPlayer].remove((move[0][0], move[0][1]))
-                self.currPos[currPlayer].append((move[1][0], move[1][1])) 
-                
-            elif move_info.start in self.whiteKings:
-                self.whiteKings.remove((move[0][0], move[0][1]))
-                self.whiteKings.remove((move[1][0], move[1][1]))
-                
-            elif move_info.start in self.blackKings:
-                self.blackKings.remove((move[0][0], move[0][1]))
-                self.blackKings.remove((move[1][0], move[1][1]))
-                
-        self.checkKing(move[1], currPlayer)
-
+            self.currPos[currPlayer].remove((move[0][0], move[0][1]))
+            self.currPos[currPlayer].append((move[1][0], move[1][1])) 
+                             
+        if move[0] in self.Kings[currPlayer]:
+            self.Kings.remove(move[0])
+            self.Kings.append(move[1])
+        else:
+            self.checkKing(move[1], currPlayer)
+        #print("White Kings:", self.Kings[1])
+        #print("Black Kings:", self.Kings[0])
         
 
 
@@ -378,7 +374,6 @@ class Board:
         #Creates an array containing all legal moves
         
         legalMoves = []
-        hasJumps = False
         
         downwards = 1
         upwards = 0
@@ -387,35 +382,24 @@ class Board:
         #White    
             if (len(self.currPos[player])>0):
                 #Regular pieces - Right
-                legalMoves, hasJumps = self.legalMoves(self.currPos[player], downwards, legalMoves, hasJumps)
-                        
-            if (len(self.whiteKings)>0): 
-                #King pieces - Down 
-                legalMoves, hasJumps = self.legalMoves(self.whiteKings, downwards, legalMoves, hasJumps)
-             
-                #King pieces - Up
-                legalMoves, hasJumps = self.legalMoves(self.whiteKings, upwards, legalMoves, hasJumps)
-                        
+                legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], downwards)                       
             
         else:
         #Black    
             if (len(self.currPos[player])>0):
                 #Regular pieces
-                legalMoves, hasJumps = self.legalMoves(self.currPos[player], upwards, legalMoves, hasJumps)
-
-            if (len(self.blackKings)>0): 
-                #King pieces - Down
-                legalMoves, hasJumps = self.legalMoves(self.blackKings, downwards, legalMoves, hasJumps)
-            
-                #King pieces - Up
-                legalMoves, hasJumps = self.legalMoves(self.blackKings, upwards, legalMoves, hasJumps)
+                legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], upwards)
             
             
         return legalMoves
 
     
-    def legalMoves(self, pieces, direction, legalMoves, hasJumps):
+    def legalMoves(self, pieces, kings, direction):
         
+        legalMoves = []
+        
+        hasJumps = False
+
         if direction:
             boardLimit = BOARD_SIZE -1 
         else:
@@ -458,9 +442,61 @@ class Board:
                             legalMoves = []                        
                         legalMoves.extend(jumps)
             
-        return legalMoves, hasJumps
+            
+            #Kings 
+            
+        for cell in pieces:
+            print ("Cell in Kings:", bool([cell] in kings))
+            print("Kings:", kings)
+            print("Cell :", [cell])
+            
+            if direction == 1:
+                direction = -1
+            else: 
+                direction = 1
+                    
+            if direction:
+                boardLimit = BOARD_SIZE -1 
+            else:
+                boardLimit = 0      
+            
+            if [cell] in kings:    
+                if (cell[0] == boardLimit):
+                    continue
+                # diagonal right, only search if not at right edge of board
+                if (cell[1]!=BOARD_SIZE-1):
+                    #empty, regular move
+                    if (self.boardState[cell[0]+next][cell[1]+1]==-1 and not hasJumps):
+                        temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]+1)) 
+                        legalMoves.append(temp)
+                    # has enemy, can jump it?
+                    elif(self.boardState[cell[0]+next][cell[1]+1]==1-direction):
+                        jumps = self.checkJump((cell[0],cell[1]), False, direction)
+                        if (len(jumps)!=0):
+                            # if first jump, clear out regular moves
+                            if not hasJumps:
+                                hasJumps = True
+                                legalMoves = []
+                            legalMoves.extend(jumps)
+                # diagonal left, only search if not at left edge of board
+                if (cell[1]!=0):
+                    if(self.boardState[cell[0]+next][cell[1]-1]==-1 and not hasJumps):
+                        temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]-1)) 
+                        legalMoves.append(temp)                    
+                    elif(self.boardState[cell[0]+next][cell[1]-1]==1-direction):
+                        jumps = self.checkJump((cell[0],cell[1]), True, direction)
+                        if (len(jumps)!=0):
+                            if not hasJumps:
+                                hasJumps = True
+                                legalMoves = []                        
+                            legalMoves.extend(jumps)
+        
+        return legalMoves
     
         
+    
+    
+    
     # enemy in the square we plan to jump over
     def checkJump(self, cell, isLeft, player):
         jumps = []
@@ -529,50 +565,19 @@ class Board:
     def checkKing(self, cell, player):
        #cell[row,col]
        boardLimit = 0 if player == 0 else BOARD_SIZE-1
-       if cell[0] == boardLimit:
-           self.currPos[player].remove(cell)
-           if player:
-               self.whiteKings.append(cell)
-               print("White kings: ", self.whiteKings)
-           else:
-               self.blackKings.append(cell)
-               print("Black kings: ", self.blackKings)
        
+       if cell[0] == boardLimit:
+           self.Kings[player].append([cell])
+               
     
-    def calcPos(self, player, king, move_info):
+    def calcPos(self, player):
         pos = []
         
-        if move_info != []:
-                
-            if player:
-                if move_info.start in self.whiteKings:
-                    for row in range(BOARD_SIZE):
-                        for col in range(BOARD_SIZE):
-                            if (self.boardState[row][col]==player):
-                                pos.append((row,col))
-                else:
-                    for row in range(BOARD_SIZE):
-                        for col in range(BOARD_SIZE):
-                            if (self.boardState[row][col]==player):
-                                pos.append((row,col))
-            else:
-                if move_info.start in self.blackKings:
-                    for row in range(BOARD_SIZE):
-                        for col in range(BOARD_SIZE):
-                            if (self.boardState[row][col]==player):
-                                pos.append((row,col))
-                else:
-                    for row in range(BOARD_SIZE):
-                        for col in range(BOARD_SIZE):
-                            if (self.boardState[row][col]==player):
-                                pos.append((row,col))
-        else:
-                
-                    for row in range(BOARD_SIZE):
-                        for col in range(BOARD_SIZE):
-                            if (self.boardState[row][col]==player):
-                                pos.append((row,col))
-        
+
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if (self.boardState[row][col]==player):
+                    pos.append((row,col))     
             
         return pos
          
