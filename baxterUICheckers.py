@@ -223,10 +223,9 @@ class Game:
     def minmax(self, board, player, depth):
        
         
-       #ADD DEPTH == 0 + GAMEOVER == TRUE
         #board.drawBoardState()
         
-        if depth == 0:
+        if depth == 0 or self.gameOver(board):
             return self.evaluation_function(board, player), board
         
         if player:
@@ -255,37 +254,43 @@ class Game:
 
         
 
-
-
-
     # returns a utility value for a non-terminal node
     # f(x) = 5(player piece in end)+3(player not in end)-7(opp in end)-3(opp not in end)
     def evaluation_function(self, board, currPlayer):
-        blk_far, blk_home_half, blk_opp_half = 0,0,0
-        wt_far, wt_home_half, wt_opp_half = 0,0,0 
-        # black's pieces
+        black_kings, black_home_half, black_opp_half = 0,0,0
+        white_kings, white_home_half, white_opp_half = 0,0,0 
+        # Black pieces
         for cell in range(len(board.currPos[0])):
-            # player pieces at end of board
-            if (board.currPos[0][cell][0] == BOARD_SIZE-1):
-                blk_far += 1
-            # player pieces in opponents end
-            # change to "print 'yes' if 0 < x < 0.5 else 'no'"
-            elif (BOARD_SIZE/2 <= board.currPos[0][cell][0] < BOARD_SIZE):
-                blk_opp_half += 1
-            else:
-                blk_home_half += 1
-        # white's pieces
+            #Increments number of kings owned by black player
+            if cell in board.Kings[1]:
+                black_kings += 1    
+            #Increments number of black pieces in own half 
+            elif (0 <= board.currPos[0][cell][0] < BOARD_SIZE/2):
+                black_home_half += 1
+            #Increments number of black pieces in opponent half
+            elif (BOARD_SIZE/2 <= board.currPos[0][cell][0] <= BOARD_SIZE - 1):
+                black_opp_half += 1
+            
+        # White pieces
         for cell in range(len(board.currPos[1])):
-            # opp pieces at end of board 
-            if (board.currPos[1][cell][0] == 0):
-                wt_far += 1
-            # opp pieces not at own end
-            elif (0 <= board.currPos[1][cell][0] < BOARD_SIZE/2):
-                wt_opp_half += 1
-            else:
-                wt_home_half += 1
-        white_score = (7 * wt_far) + (5 * wt_opp_half)+ (3 * wt_home_half)
-        black_score = (7 * blk_far) + (5 * blk_opp_half)+ (3 * blk_home_half)
+            #Increments number of kings owned by white player
+            if cell in board.Kings[1]:
+                white_kings += 1    
+            #Increments number of white pieces in own half 
+            elif (BOARD_SIZE - 1 <= board.currPos[1][cell][0] < BOARD_SIZE/2):
+                white_home_half += 1
+            #Increments number of white pieces in opponent half
+            elif (BOARD_SIZE/2 <= board.currPos[1][cell][0] <= 0):
+                white_opp_half += 1
+            
+        #print("White Kings:", white_kings)
+        #print("Black Kings:", black_kings)
+            
+        #Calculate final score 
+        # Score = (6* Own pieces on opponent end) + (5* Own pieces in own end) + (8*Own king pieces)
+        white_score = (7 * white_opp_half) + (5 * white_home_half)+ (9 * white_kings)
+        black_score = (7 * white_opp_half) + (5 * black_home_half)+ (9 * black_kings)
+        
         if (currPlayer == 0):
             return (black_score - white_score)
         else:
@@ -355,11 +360,8 @@ class Board:
             self.currPos[currPlayer].remove((move[0][0], move[0][1]))
             self.currPos[currPlayer].append((move[1][0], move[1][1])) 
                              
-        if move[0] in self.Kings[currPlayer]:
-            self.Kings.remove(move[0])
-            self.Kings.append(move[1])
-        else:
-            self.checkKing(move[1], currPlayer)
+               
+        self.checkKing(move, currPlayer)
         #print("White Kings:", self.Kings[1])
         #print("Black Kings:", self.Kings[0])
         
@@ -441,7 +443,7 @@ class Board:
             #Kings 
             
         for cell in pieces:
-            #print ("Cell in Kings:", bool([cell] in kings))
+            print ("Cell in Kings:", bool(cell in kings))
             #print("Kings:", kings)
             #print("Cell :", [cell])
             
@@ -453,9 +455,14 @@ class Board:
             if direction:
                 boardLimit = BOARD_SIZE -1 
             else:
-                boardLimit = 0      
+                boardLimit = 0  
             
-            if [cell] in kings:    
+            if direction:
+                next = 1
+            else:
+                next = -1     
+            
+            if cell in kings:    
                 if (cell[0] == boardLimit):
                     continue
                 # diagonal right, only search if not at right edge of board
@@ -557,14 +564,20 @@ class Board:
         return jumps
     
     
-    def checkKing(self, cell, player):
+    def checkKing(self, move, player):
        #cell[row,col]
        boardLimit = 0 if player == 0 else BOARD_SIZE-1
+       #print("Kings player:", self.Kings[player])
+       #print("Move:", move[1][1])
        
-       if cell[0] == boardLimit:
-           self.Kings[player].append([cell])
-               
+       if move[1][0] == boardLimit:
+           self.Kings[player].append(move[1])
+       elif move[0] in self.Kings[player]:
+           self.Kings[player].remove(move[0])
+           self.Kings[player].append(move[1])
     
+       #print("Kings:", self.Kings)
+   
     def calcPos(self, player):
         pos = []
         
