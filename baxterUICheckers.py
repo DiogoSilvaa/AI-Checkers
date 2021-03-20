@@ -224,6 +224,7 @@ class Game:
        
         
        #ADD DEPTH == 0 + GAMEOVER == TRUE
+        #board.drawBoardState()
         
         if depth == 0:
             return self.evaluation_function(board, player), board
@@ -232,25 +233,31 @@ class Game:
             robotEval = float('-inf')
             best_move = None
             for move in board.calcLegalMoves(player):
-                copy.deepcopy(board).boardMove(move, player)
-                evaluation = self.minmax(copy.deepcopy(board), False, depth-1)[0] 
+                simBoard = copy.deepcopy(board)
+                simBoard.boardMove(move, player)
+                evaluation = self.minmax(simBoard, False, depth-1)[0] 
                 if evaluation > robotEval:
                     robotEval = evaluation
                     best_move = move 
-                return robotEval, best_move
+            return robotEval, best_move
             
         else:
             humanEval = float('-inf')
             best_move = None
             for move in board.calcLegalMoves(player):
-                copy.deepcopy(board).boardMove(move, player)
-                evaluation = self.minmax(copy.deepcopy(board), True, depth-1)[0]
+                simBoard = copy.deepcopy(board)
+                simBoard.boardMove(move, player)
+                evaluation = self.minmax(simBoard, True, depth-1)[0]
                 if evaluation > humanEval:
                     humanEval = evaluation 
                     best_move = move 
             return humanEval, best_move
 
         
+
+
+
+
     # returns a utility value for a non-terminal node
     # f(x) = 5(player piece in end)+3(player not in end)-7(opp in end)-3(opp not in end)
     def evaluation_function(self, board, currPlayer):
@@ -282,19 +289,7 @@ class Game:
         if (currPlayer == 0):
             return (black_score - white_score)
         else:
-            return (white_score - black_score)       
-                 
-# wrapper for alpha-beta info
-# v = [move_value, move, max tree depth, # child nodes, # max/beta cutoff, # min/alpha cutoff]
-class AB_Value:
-    def __init__(self, move_value, move, max_depth, child_nodes, max_cutoff, min_cutoff):
-        self.move_value = move_value
-        self.move = move
-        self.max_depth = max_depth
-        self.nodes = child_nodes
-        self.max_cutoff = max_cutoff
-        self.min_cutoff = min_cutoff
-
+            return (white_score - black_score)                        
 
 # wrapper for state used in alpha-beta
 class AB_State:
@@ -446,9 +441,9 @@ class Board:
             #Kings 
             
         for cell in pieces:
-            print ("Cell in Kings:", bool([cell] in kings))
-            print("Kings:", kings)
-            print("Cell :", [cell])
+            #print ("Cell in Kings:", bool([cell] in kings))
+            #print("Kings:", kings)
+            #print("Cell :", [cell])
             
             if direction == 1:
                 direction = -1
