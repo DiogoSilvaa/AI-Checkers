@@ -406,6 +406,11 @@ class Board:
             next = 1
         else:
             next = -1
+            
+        if direction:
+            enemy = 1
+        else:
+            enemy = 0 
         
         # cell refers to a position tuple (row, col)
         for cell in pieces:
@@ -418,8 +423,8 @@ class Board:
                     temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]+1)) 
                     legalMoves.append(temp)
                 # has enemy, can jump it?
-                elif(self.boardState[cell[0]+next][cell[1]+1]==1-direction):
-                    jumps = self.checkJump((cell[0],cell[1]), False, direction, False)
+                elif(self.boardState[cell[0]+next][cell[1]+1]==1-enemy):
+                    jumps = self.checkJump((cell[0],cell[1]), False, direction)
                     if (len(jumps)!=0):
                         # if first jump, clear out regular moves
                         if not hasJumps:
@@ -431,8 +436,8 @@ class Board:
                 if(self.boardState[cell[0]+next][cell[1]-1]==-1 and not hasJumps):
                     temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]-1)) 
                     legalMoves.append(temp)                    
-                elif(self.boardState[cell[0]+next][cell[1]-1]==1-direction):
-                    jumps = self.checkJump((cell[0],cell[1]), True, direction, False)
+                elif(self.boardState[cell[0]+next][cell[1]-1]==1-enemy):
+                    jumps = self.checkJump((cell[0],cell[1]), True, direction)
                     if (len(jumps)!=0):
                         if not hasJumps:
                             hasJumps = True
@@ -441,26 +446,25 @@ class Board:
             
             
             #Kings 
+        if direction == 1:
+            direction = -1
+        else: 
+            direction = 1
+                    
+        if direction:
+            boardLimit = BOARD_SIZE -1 
+        else:
+            boardLimit = 0  
             
+        if direction:
+            next = 1
+        else:
+            next = -1  
+                
         for cell in pieces:
             #print ("Cell in Kings:", bool(cell in kings))
             #print("Kings:", kings)
-            #print("Cell :", [cell])
-            
-            if direction == 1:
-                direction = -1
-            else: 
-                direction = 1
-                    
-            if direction:
-                boardLimit = BOARD_SIZE -1 
-            else:
-                boardLimit = 0  
-            
-            if direction:
-                next = 1
-            else:
-                next = -1     
+            #print("Cell :", [cell])               
             
             if cell in kings:    
                 if (cell[0] == boardLimit):
@@ -472,8 +476,8 @@ class Board:
                         temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]+1)) 
                         legalMoves.append(temp)
                     # has enemy, can jump it?
-                    elif(self.boardState[cell[0]+next][cell[1]+1]==1-direction):
-                        jumps = self.checkJump((cell[0],cell[1]), False, direction, True)
+                    elif(self.boardState[cell[0]+next][cell[1]+1]==1-enemy):
+                        jumps = self.checkJump((cell[0],cell[1]), False, direction)
                         if (len(jumps)!=0):
                             # if first jump, clear out regular moves
                             if not hasJumps:
@@ -485,8 +489,8 @@ class Board:
                     if(self.boardState[cell[0]+next][cell[1]-1]==-1 and not hasJumps):
                         temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]-1)) 
                         legalMoves.append(temp)                    
-                    elif(self.boardState[cell[0]+next][cell[1]-1]==1-direction):
-                        jumps = self.checkJump((cell[0],cell[1]), True, direction, True)
+                    elif(self.boardState[cell[0]+next][cell[1]-1]==1-enemy):
+                        jumps = self.checkJump((cell[0],cell[1]), True, direction)
                         if (len(jumps)!=0):
                             if not hasJumps:
                                 hasJumps = True
@@ -500,136 +504,69 @@ class Board:
     
     
     # enemy in the square we plan to jump over
-    def checkJump(self, cell, isLeft, player, king):
+    def checkJump(self, cell, isLeft, player):
         jumps = []
-        
         next = -1 if player == 0 else 1
         
-        if player == 1:
-            boardLimit = BOARD_SIZE - 1
-        else:
-            boardLimit = 0
-        
         # check boundaries!
-        if not king:
-            if (cell[0]+next != boardLimit): 
-                #check top left
-                if (isLeft):
-                    if (cell[1]>1 and self.boardState[cell[0]+next+next][cell[1]-2]==-1):
-                        temp = Move(cell, (cell[0]+next+next, cell[1]-2), True)
-                        temp.jumpOver = [(cell[0]+next,cell[1]-1)]
-                        # can has double jump?
-                        if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
-                            #enemy in top left of new square?
-                            if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                test = self.checkJump(temp.end, True, player, False)
-                                if (test != []):
-                                    dbl_temp = copy.deepcopy(temp)
-                                    dbl_temp.end = test[0].end 
-                                    dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                    jumps.append(dbl_temp)                      
-                            # top right?
-                            if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                                test = self.checkJump(temp.end, False, player, False)                  
-                                if (test != []):
-                                    dbl_temp = copy.deepcopy(temp)
-                                    dbl_temp.end = test[0].end 
-                                    dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                    jumps.append(dbl_temp)                              
-                        jumps.append(temp)
-                else:
-                #check top right
-                    if (cell[1]<BOARD_SIZE-2 and self.boardState[cell[0]+next+next][cell[1]+2]==-1):
-                        # ([original cell, new cell], enemy cell])
-                        temp = Move(cell, (cell[0]+next+next, cell[1]+2), True)
-                        temp.jumpOver = [(cell[0]+next,cell[1]+1)]
-                        # can has double jump?
-                        if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
-                            #enemy in top left of new square?
-                            if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                test = self.checkJump(temp.end, True, player, True)
-                                if (test != []):
-                                    dbl_temp = copy.deepcopy(temp)
-                                    dbl_temp.end = test[0].end 
-                                    dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                    jumps.append(dbl_temp)                              
-                            # top right?
-                            if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                                test = self.checkJump(temp.end, False, player, False) 
-                                if (test != []):
-                                    dbl_temp = copy.deepcopy(temp)
-                                    dbl_temp.end = test[0].end 
-                                    dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                    jumps.append(dbl_temp)                              
-                        jumps.append(temp)  
-                    
+        if (cell[0]+next == 0 or cell[0]+next == BOARD_SIZE-1):
+            return jumps
+        
+        #check top left
+        if (isLeft):
+            if (cell[1]>1 and self.boardState[cell[0]+next+next][cell[1]-2]==-1):
+                temp = Move(cell, (cell[0]+next+next, cell[1]-2), True)
+                temp.jumpOver = [(cell[0]+next,cell[1]-1)]
+                # can has double jump?
+                helper = temp.end
+                if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
+                    #enemy in top left of new square?
+                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
+                        test = self.checkJump(temp.end, True, player)
+                        if (test != []):
+                            dbl_temp = copy.deepcopy(temp)
+                            dbl_temp.end = test[0].end 
+                            dbl_temp.jumpOver.extend(test[0].jumpOver)
+                            jumps.append(dbl_temp)                      
+                    # top right?
+                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
+                        test = self.checkJump(temp.end, False, player)                  
+                        if (test != []):
+                            dbl_temp = copy.deepcopy(temp)
+                            dbl_temp.end = test[0].end 
+                            dbl_temp.jumpOver.extend(test[0].jumpOver)
+                            jumps.append(dbl_temp)                              
+                jumps.append(temp)
         else:
-            if next == -1:
-                next = 1 
-            else:
-                next = -1
-            
-            if boardLimit == BOARD_SIZE - 1:
-                boardLimit = 0
-            else:
-                boardLimit = BOARD_SIZE - 1
-       
-            if (cell[0]+next != boardLimit): 
-                   # check boundaries!
-                   if (cell[0]+next == 0 or cell[0]+next == BOARD_SIZE-1):
-                       return jumps
-                
-                   #check top left
-                   if (isLeft):
-                       if (cell[1]>1 and self.boardState[cell[0]+next+next][cell[1]-2]==-1):
-                           temp = Move(cell, (cell[0]+next+next, cell[1]-2), True)
-                           temp.jumpOver = [(cell[0]+next,cell[1]-1)]
-                           # can has double jump?
-                           if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
-                               #enemy in top left of new square?
-                               if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                   test = self.checkJump(temp.end, True, player)
-                                   if (test != []):
-                                       dbl_temp = copy.deepcopy(temp)
-                                       dbl_temp.end = test[0].end 
-                                       dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                       jumps.append(dbl_temp)                      
-                           # top right?
-                           if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                               test = self.checkJump(temp.end, False, player)                  
-                               if (test != []):
-                                   dbl_temp = copy.deepcopy(temp)
-                                   dbl_temp.end = test[0].end 
-                                   dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                   jumps.append(dbl_temp)                              
-                           jumps.append(temp)
-                   else:
-                   #check top right
-                       if (cell[1]<BOARD_SIZE-2 and self.boardState[cell[0]+next+next][cell[1]+2]==-1):
-                           # ([original cell, new cell], enemy cell])
-                           temp = Move(cell, (cell[0]+next+next, cell[1]+2), True)
-                           temp.jumpOver = [(cell[0]+next,cell[1]+1)]
-                           # can has double jump?
-                           if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
-                               #enemy in top left of new square?
-                               if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                   test = self.checkJump(temp.end, True, player)
-                                   if (test != []):
-                                       dbl_temp = copy.deepcopy(temp)
-                                       dbl_temp.end = test[0].end 
-                                       dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                       jumps.append(dbl_temp)                              
-                           # top right?
-                           if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                               test = self.checkJump(temp.end, False, player, True) 
-                               if (test != []):
-                                   dbl_temp = copy.deepcopy(temp)
-                                   dbl_temp.end = test[0].end 
-                                   dbl_temp.jumpOver.extend(test[0].jumpOver)
-                                   jumps.append(dbl_temp)                              
-                           jumps.append(temp)  
-            
-        return jumps
+        #check top right
+            if (cell[1]<BOARD_SIZE-2 and self.boardState[cell[0]+next+next][cell[1]+2]==-1):
+                # ([original cell, new cell], enemy cell])
+                temp = Move(cell, (cell[0]+next+next, cell[1]+2), True)
+                temp.jumpOver = [(cell[0]+next,cell[1]+1)]
+                # can has double jump?
+                if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
+                    #enemy in top left of new square?
+                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
+                        test = self.checkJump(temp.end, True, player)
+                        if (test != []):
+                            dbl_temp = copy.deepcopy(temp)
+                            dbl_temp.end = test[0].end 
+                            dbl_temp.jumpOver.extend(test[0].jumpOver)
+                            jumps.append(dbl_temp)                              
+                    # top right?
+                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
+                        test = self.checkJump(temp.end, False, player) 
+                        if (test != []):
+                            dbl_temp = copy.deepcopy(temp)
+                            dbl_temp.end = test[0].end 
+                            dbl_temp.jumpOver.extend(test[0].jumpOver)
+                            jumps.append(dbl_temp)                              
+                jumps.append(temp)                
+    # uncomment this when its time to try double jumps
+     #   print("Jumps:")
+     #   for mov in jumps:
+     #       print(str(mov.start)+" "+str(mov.end)+" Jump over: "+str(mov.jumpOver))
+        return jumps                          
     
     
     def checkKing(self, move, player):
