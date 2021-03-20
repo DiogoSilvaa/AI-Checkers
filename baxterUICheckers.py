@@ -522,7 +522,7 @@ class Board:
                         if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
                             #enemy in top left of new square?
                             if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                test = self.checkJump(temp.end, True, player)
+                                test = self.checkJump(temp.end, True, player, False)
                                 if (test != []):
                                     dbl_temp = copy.deepcopy(temp)
                                     dbl_temp.end = test[0].end 
@@ -530,7 +530,7 @@ class Board:
                                     jumps.append(dbl_temp)                      
                             # top right?
                             if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                                test = self.checkJump(temp.end, False, player)                  
+                                test = self.checkJump(temp.end, False, player, False)                  
                                 if (test != []):
                                     dbl_temp = copy.deepcopy(temp)
                                     dbl_temp.end = test[0].end 
@@ -547,7 +547,7 @@ class Board:
                         if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
                             #enemy in top left of new square?
                             if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                                test = self.checkJump(temp.end, True, player)
+                                test = self.checkJump(temp.end, True, player, True)
                                 if (test != []):
                                     dbl_temp = copy.deepcopy(temp)
                                     dbl_temp.end = test[0].end 
@@ -555,7 +555,7 @@ class Board:
                                     jumps.append(dbl_temp)                              
                             # top right?
                             if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                                test = self.checkJump(temp.end, False, player) 
+                                test = self.checkJump(temp.end, False, player, False) 
                                 if (test != []):
                                     dbl_temp = copy.deepcopy(temp)
                                     dbl_temp.end = test[0].end 
@@ -621,7 +621,7 @@ class Board:
                                        jumps.append(dbl_temp)                              
                            # top right?
                            if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                               test = self.checkJump(temp.end, False, player) 
+                               test = self.checkJump(temp.end, False, player, True) 
                                if (test != []):
                                    dbl_temp = copy.deepcopy(temp)
                                    dbl_temp.end = test[0].end 
