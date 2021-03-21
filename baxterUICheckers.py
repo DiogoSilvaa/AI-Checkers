@@ -1,15 +1,8 @@
 #!/usr/bin/python
 """
 Originally by Jason Schapiro 2012
-
-# Next steps:
-# X 1. Implement game-over evaluation func
-# X 2. Alpha-beta search
-# X 3. Alpha-beta info
-# 4. Starting screen - choose player
-# X 5. Double jumps
-
 Modified by M L Walters, 2014
+Modified by D A Nobrega, 2021
 For use with BAxter Robot Draughts Game
 
 """
@@ -120,7 +113,9 @@ class Game:
             else:
                 #If there are more than one possible play, AI makes the choice
                 state = AB_State(self.board, self.turn, self.turn)
-                move = self.minmax(copy.deepcopy(state.board), True, 3)[1]                
+                move = self.minmax(copy.deepcopy(state.board), True, 3)[1]
+                #Board is deep copied to maintain the state of the current board while
+                #AI finds the best move by simulating plays                 
                 
             self.makeMove(move) #Make the move according to AI's choice
             print("Computer chooses ("+str(move.start)+", "+str(move.end)+")")
@@ -146,7 +141,7 @@ class Game:
         
                
     def makeMove(self, move):
-        #Function to make the chosen move
+        #Function to perform the chosen move
         
         self.board.boardMove(move, self.turn) # Update board according to move chosen
         
@@ -157,6 +152,7 @@ class Game:
             
         
     def getMove(self, legal):
+        #Function to capture the input of the user (chosen move)
         move = -1
 
         # repeats until player picks move on the list
@@ -184,7 +180,7 @@ class Game:
             return True
 
         elif (len(board.calcLegalMoves(0)) == 0 and len(board.calcLegalMoves(1)) == 0):
-            # no legal moves available, stalemate
+            # no legal moves available
             return True
 
         else:
@@ -218,29 +214,38 @@ class Game:
 
 
     #Artificial Intelligence        
-    
-    
+
     def minmax(self, board, player, depth):
-       
+    #Function to help determine the best move for the robot to perform   
         
+        #Debug:
         #board.drawBoardState()
         
         if depth == 0 or self.gameOver(board):
+            #In case a move reaches the maximum depth or the move finishes the game
+            #Returns the board score for the move
             return self.evaluation_function(board, player), board
         
         if player:
+            #If it is the robot's turn:
             robotEval = float('-inf')
             best_move = None
+            #For loop iterates through all legal moves for the current board position
             for move in board.calcLegalMoves(player):
+                #Board is deep copied to maintain its state
                 simBoard = copy.deepcopy(board)
+                #Move are performed in the copied board
                 simBoard.boardMove(move, player)
+                #Recursion is performed in each move until it reaches max depth
                 evaluation = self.minmax(simBoard, False, depth-1)[0] 
                 if evaluation > robotEval:
+                #Best scored move is kept as the final move 
                     robotEval = evaluation
                     best_move = move 
             return robotEval, best_move
             
         else:
+            #If it is the robot's turn:
             humanEval = float('-inf')
             best_move = None
             for move in board.calcLegalMoves(player):
@@ -254,11 +259,12 @@ class Game:
 
         
 
-    # returns a utility value for a non-terminal node
-    # f(x) = 5(player piece in end)+3(player not in end)-7(opp in end)-3(opp not in end)
     def evaluation_function(self, board, currPlayer):
+    #Function evaluates the board state and returns a score
+    #Different weights are given to number of pieces, kings and their positioning
         black_kings, black_home_half, black_opp_half = 0,0,0
         white_kings, white_home_half, white_opp_half = 0,0,0 
+        
         # Black pieces
         for cell in range(len(board.currPos[0])):
             #Increments number of kings owned by black player
@@ -282,22 +288,20 @@ class Game:
             #Increments number of white pieces in opponent half
             elif (BOARD_SIZE/2 <= board.currPos[1][cell][0] <= 0):
                 white_opp_half += 1
-            
-        #print("White Kings:", white_kings)
-        #print("Black Kings:", black_kings)
-            
+                
         #Calculate final score 
         # Score = (6* Own pieces on opponent end) + (5* Own pieces in own end) + (8*Own king pieces)
         white_score = (7 * white_opp_half) + (5 * white_home_half)+ (9 * white_kings)
         black_score = (7 * white_opp_half) + (5 * black_home_half)+ (9 * black_kings)
         
+        #Returns the player's respective score
         if (currPlayer == 0):
             return (black_score - white_score)
         else:
             return (white_score - black_score)                        
 
 # wrapper for state used in alpha-beta
-class AB_State:
+class State:
    def __init__(self, boardState, currPlayer, originalPlayer):
       self.board = boardState
       self.player = currPlayer
@@ -305,7 +309,7 @@ class AB_State:
       
 class Move:
     def __init__(self, start, end, jump=False):
-            self.start = start
+            self.start = start # tuple (row, col)
             self.end = end # tuple (row, col)
             self.jump = jump # bool
             self.jumpOver = [] # array of pieces jumped over
@@ -316,8 +320,8 @@ class Board:
             self.boardState = board     
         else:
             self.setDefaultBoard()
-        self.currPos = [[],[]]
-        if (currBlack != []):
+        self.currPos = [[],[]]  #Array to hold black's pieces [0] and white's [1]
+        if (currBlack != []): 
             self.currPos[0] = currBlack
         else:
             self.currPos[0] = self.calcPos(0)
@@ -325,18 +329,15 @@ class Board:
             self.currPos[1] = currWhite
         else:
             self.currPos[1] = self.calcPos(1)
-        self.Kings = [[],[]]
+        self.Kings = [[],[]] #Array to hold black's kings [0] and white's [1]
         if (kingBlack != 0):
-            self.Kings[0] = kingBlack
+            self.Kings[0] = kingBlack 
         if (kingWhite != 0):
             self.Kings[1] = kingWhite
                       
     def boardMove(self, move_info, currPlayer):
         move = [move_info.start, move_info.end]
-        #print("Move:", move)
-        #self.drawBoardState()
         
-        #remove = move_info.jumpOver
         jump = move_info.jump      
         
         
@@ -360,33 +361,32 @@ class Board:
             self.currPos[currPlayer].remove((move[0][0], move[0][1]))
             self.currPos[currPlayer].append((move[1][0], move[1][1])) 
                              
-               
+        #Update kings according to the move performed       
         self.checkKing(move, currPlayer)
-        #print("White Kings:", self.Kings[1])
-        #print("Black Kings:", self.Kings[0])
         
 
 
-    def calcLegalMoves(self, player): # int array  -> [0] reg, [1] jump
-        #Creates an array containing all legal moves
+    def calcLegalMoves(self, player): 
+        #Creates an array containing all legal moves and returns it
         
         legalMoves = []
         
+        #Moves direction (Down the board = 1) (Up the board = 0)
         downwards = 1
         upwards = 0
         
         if player:
         #White    
             if (len(self.currPos[player])>0):
-                #Regular pieces - Right
+                #Calculates legal moves if there's pieces left in player's possession
                 legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], downwards)                       
-            
+                
         else:
         #Black    
             if (len(self.currPos[player])>0):
-                #Regular pieces
+                #Calculates legal moves if there's pieces left in player's possession
                 legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], upwards)
-            
+                
             
         return legalMoves
 
@@ -397,19 +397,15 @@ class Board:
         
         hasJumps = False
 
+        #If direction being calculated is downwards
         if direction:
             boardLimit = BOARD_SIZE -1 
+            next = 1
+            enemy = 1
+        #If direction being calculated is upwards
         else:
             boardLimit = 0
-        
-        if direction:
-            next = 1
-        else:
             next = -1
-            
-        if direction:
-            enemy = 1
-        else:
             enemy = 0 
         
         # cell refers to a position tuple (row, col)
@@ -424,7 +420,7 @@ class Board:
                     legalMoves.append(temp)
                 # has enemy, can jump it?
                 elif(self.boardState[cell[0]+next][cell[1]+1]==1-enemy):
-                    jumps = self.checkJump((cell[0],cell[1]), False, direction)
+                    jumps = self.checkJump((cell[0],cell[1]), False, direction, enemy)
                     if (len(jumps)!=0):
                         # if first jump, clear out regular moves
                         if not hasJumps:
@@ -437,7 +433,7 @@ class Board:
                     temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]-1)) 
                     legalMoves.append(temp)                    
                 elif(self.boardState[cell[0]+next][cell[1]-1]==1-enemy):
-                    jumps = self.checkJump((cell[0],cell[1]), True, direction)
+                    jumps = self.checkJump((cell[0],cell[1]), True, direction, enemy)
                     if (len(jumps)!=0):
                         if not hasJumps:
                             hasJumps = True
@@ -447,26 +443,20 @@ class Board:
             
             #Kings 
         if direction == 1:
-            direction = -1
+            direction = 0
+            boardLimit = 0
+            next = -1
         else: 
             direction = 1
-                    
-        if direction:
-            boardLimit = BOARD_SIZE -1 
-        else:
-            boardLimit = 0  
-            
-        if direction:
+            boardLimit = BOARD_SIZE-1
             next = 1
-        else:
-            next = -1  
                 
         for cell in pieces:
             #print ("Cell in Kings:", bool(cell in kings))
             #print("Kings:", kings)
-            #print("Cell :", [cell])               
+            #print("Cell :", [cell])             
             
-            if cell in kings:    
+            if cell in kings:   
                 if (cell[0] == boardLimit):
                     continue
                 # diagonal right, only search if not at right edge of board
@@ -477,7 +467,7 @@ class Board:
                         legalMoves.append(temp)
                     # has enemy, can jump it?
                     elif(self.boardState[cell[0]+next][cell[1]+1]==1-enemy):
-                        jumps = self.checkJump((cell[0],cell[1]), False, direction)
+                        jumps = self.checkJump((cell[0],cell[1]), False, direction, enemy)
                         if (len(jumps)!=0):
                             # if first jump, clear out regular moves
                             if not hasJumps:
@@ -490,7 +480,7 @@ class Board:
                         temp = Move((cell[0],cell[1]),(cell[0]+next,cell[1]-1)) 
                         legalMoves.append(temp)                    
                     elif(self.boardState[cell[0]+next][cell[1]-1]==1-enemy):
-                        jumps = self.checkJump((cell[0],cell[1]), True, direction)
+                        jumps = self.checkJump((cell[0],cell[1]), True, direction, enemy)
                         if (len(jumps)!=0):
                             if not hasJumps:
                                 hasJumps = True
@@ -504,9 +494,9 @@ class Board:
     
     
     # enemy in the square we plan to jump over
-    def checkJump(self, cell, isLeft, player):
+    def checkJump(self, cell, isLeft, direction, enemy):
         jumps = []
-        next = -1 if player == 0 else 1
+        next = -1 if direction == 0 else 1
         
         # check boundaries!
         if (cell[0]+next == 0 or cell[0]+next == BOARD_SIZE-1):
@@ -518,19 +508,19 @@ class Board:
                 temp = Move(cell, (cell[0]+next+next, cell[1]-2), True)
                 temp.jumpOver = [(cell[0]+next,cell[1]-1)]
                 # can has double jump?
-                helper = temp.end
+                #helper = temp.end
                 if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
                     #enemy in top left of new square?
-                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                        test = self.checkJump(temp.end, True, player)
+                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-enemy)):
+                        test = self.checkJump(temp.end, True, direction, enemy)
                         if (test != []):
                             dbl_temp = copy.deepcopy(temp)
                             dbl_temp.end = test[0].end 
                             dbl_temp.jumpOver.extend(test[0].jumpOver)
                             jumps.append(dbl_temp)                      
                     # top right?
-                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                        test = self.checkJump(temp.end, False, player)                  
+                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-enemy)):
+                        test = self.checkJump(temp.end, False, direction, enemy)                  
                         if (test != []):
                             dbl_temp = copy.deepcopy(temp)
                             dbl_temp.end = test[0].end 
@@ -546,22 +536,22 @@ class Board:
                 # can has double jump?
                 if (temp.end[0]+next > 0 and temp.end[0]+next < BOARD_SIZE-1):
                     #enemy in top left of new square?
-                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-player)):
-                        test = self.checkJump(temp.end, True, player)
+                    if (temp.end[1]>1 and self.boardState[temp.end[0]+next][temp.end[1]-1]==(1-enemy)):
+                        test = self.checkJump(temp.end, True, direction, enemy)
                         if (test != []):
                             dbl_temp = copy.deepcopy(temp)
                             dbl_temp.end = test[0].end 
                             dbl_temp.jumpOver.extend(test[0].jumpOver)
                             jumps.append(dbl_temp)                              
                     # top right?
-                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-player)):
-                        test = self.checkJump(temp.end, False, player) 
+                    if (temp.end[1]<BOARD_SIZE-2 and self.boardState[temp.end[0]+next][temp.end[1]+1]==(1-enemy)):
+                        test = self.checkJump(temp.end, False, direction, enemy) 
                         if (test != []):
                             dbl_temp = copy.deepcopy(temp)
                             dbl_temp.end = test[0].end 
                             dbl_temp.jumpOver.extend(test[0].jumpOver)
                             jumps.append(dbl_temp)                              
-                jumps.append(temp)                
+                jumps.append(temp)
     # uncomment this when its time to try double jumps
      #   print("Jumps:")
      #   for mov in jumps:
