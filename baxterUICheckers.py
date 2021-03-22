@@ -40,6 +40,8 @@ when the robot is finding its best move.
 MinMax search algorithm optimisation(s) implemented - 5pts
 -MinMax algorithm was fully optimised to determine the best move.
 -None of the previous code was used, thus, not optimised.
+-MinMax algorithm takes into consideration the amount of jumps available. Bigger the amount of jumps,
+better it is.
 
 Evaluation function improvements - 5pts
 -Evaluation function was changed. Now it takes into consideration the number of pieces,
@@ -156,6 +158,7 @@ class Game:
             #If there is any play possible, let the human choose
             move = self.getMove(legal) #Get human to input its choice
             print("Human chooses:", move.start)
+            self.makeMove(move) #Human moves the piece
         else:
             #If there is not any play available, human input is not needed
             print("No legal moves available, skipping turn...")    
@@ -333,33 +336,18 @@ class Game:
     #Different weights are given to number of pieces, kings and their positioning
         black_kings, black_home_half, black_opp_half = 0,0,0
         white_kings, white_home_half, white_opp_half = 0,0,0 
+        blackAttacks, whiteAttacks = 0,0
         
-        #Variables hold legal moves for each player
-        blackMoves = board.calcLegalMoves(0)
-        whiteMoves = board.calcLegalMoves(1)
+        #If black pieces have jumps available to make:
+        if (board.legalMoves(board.currPos[0], board.Kings[0], 0)[1]):
+            #Store amount of jumps in black attacks
+            blackAttacks = len(board.legalMoves(board.currPos[0], board.Kings[0], 1)[0])
         
-        blackDanger, whiteDanger = 0,0 
-       
-        for cell in board.currPos[0]:
-        #Iterates through current positions   
-            for move in whiteMoves:
-                #Iterates through enemy's moves
-                if (cell[0]+1,cell[1]+2) == move.end or (cell[0]+1,cell[1]-2) == move.end:
-                    blackDanger += 1
-                if move.start in board.Kings[1]:
-                    if (cell[0]+2,cell[1]+2) == move.end or (cell[0]+2,cell[1]-2) == move.end:
-                        blackDanger += 1
-        
-        for cell in board.currPos[1]:
-        #Iterates through current positions        
-            for move in blackMoves:
-                #Iterates through enemy's moves
-                if (cell[0]+2,cell[1]+2) == move.end or (cell[0]+2,cell[1]-2) == move.end:
-                    whiteDanger += 1  
-                if move.start in board.Kings[0]:
-                    if (cell[0]+2,cell[1]+2) == move.end or (cell[0]+2,cell[1]-2) == move.end:
-                        whiteDanger += 1        
-                        
+        #If white pieces have jumps available to make:    
+        if (board.legalMoves(board.currPos[1], board.Kings[1], 1)[1]):
+            #Store amount of jumps in white attacks
+            whiteAttacks = len(board.legalMoves(board.currPos[1], board.Kings[1], 1)[0])    
+                         
         # Black pieces
         for cell in range(len(board.currPos[0])):  
             #Increments number of kings owned by black player
@@ -386,8 +374,8 @@ class Game:
 
         #Calculate final score 
         # Score = (7* Own pieces on opponent end) + (5* Own pieces in own end) + (9*Own king pieces)
-        white_score = (1.25 * white_opp_half) + (1 * white_home_half)+ (2 * white_kings) - (whiteDanger)
-        black_score = (1.25 * white_opp_half) + (1 * black_home_half)+ (2 * black_kings) - (blackDanger)
+        white_score = (1.25 * white_opp_half) + (1 * white_home_half)+ (2 * white_kings) + (3 * whiteAttacks)
+        black_score = (1.25 * white_opp_half) + (1 * black_home_half)+ (2 * black_kings) + (3 * blackAttacks)
         
         #Returns the player's respective score
         if (currPlayer == 0):
@@ -478,7 +466,7 @@ class Board:
         #White    
             if (len(self.currPos[player])>0):
                 #Calculates legal moves if there's pieces left in player's possession
-                legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], downwards)[0]                       
+                legalMoves = self.legalMoves(self.currPos[player], self.Kings[player], downwards)[0]                    
                 
         else:
         #Black    
