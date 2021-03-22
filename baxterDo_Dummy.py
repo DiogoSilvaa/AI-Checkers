@@ -119,7 +119,7 @@ def move_to(placeName=None, approach = 0, limb = "left"):
     return
 
 
-def king_piece(kingpos, colour="black", limb="left"):
+def king_piece(kingpos, colour="white", limb="left"):
     """
     Will king a piece at kingpos, taking a piece form the take area relevant to the player colour,
     "Black" or "White". kingpos is a string (e.g. "A7" which is a key to a set of xyz co-ords
