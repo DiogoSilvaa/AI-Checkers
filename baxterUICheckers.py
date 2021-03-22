@@ -150,7 +150,7 @@ class Game:
     
     #Game turns
     def humanTurn(self):
-        #Function finds possible plays and lets human determine which play to use
+        """Function finds possible plays and lets human determine which play to use"""
         
         legal = self.board.calcLegalMoves(self.turn) #Determine list of possible plays
         
@@ -165,7 +165,7 @@ class Game:
    
         
     def aiTurn(self):
-        #Function lets AI choose the best possible play
+        """Function lets AI choose the best possible play"""
         
         legal = self.board.calcLegalMoves(self.turn) #Determine list of possible plays
         
@@ -200,7 +200,7 @@ class Game:
 
     #Game functionalities     
     def listMoves(self, legal):
-        #Function prints out legal moves
+        """Function prints out legal moves"""
         
         print("Valid Moves: ")
         
@@ -211,7 +211,7 @@ class Game:
         
                
     def makeMove(self, move):
-        #Function to perform the chosen move
+        """Function to perform the chosen move"""
         
         king = self.board.boardMove(move, self.turn) # Update board according to move chosen
         
@@ -225,7 +225,7 @@ class Game:
         
         
     def getMove(self, legal):
-        #Function to capture the input of the user (chosen move)
+        """Function to capture the input of the user (chosen move)"""       
         move = -1
 
         # repeats until player picks move on the list
@@ -246,7 +246,7 @@ class Game:
         return (legal[move])
         
     def gameOver(self, board):
-        # returns a boolean value determining if game finished
+        """Function returns a boolean value determining if game finished """
 
         if (len(board.currPos[0])== 0) or (len(board.currPos[1]) == 0):
             # all pieces from one side captured
@@ -262,7 +262,7 @@ class Game:
         
         
     def calcScore(self, board):
-    #calculates the final score for the board
+        """Function calculates the final score for the board"""
 
         score = [0,0]
 
@@ -289,7 +289,7 @@ class Game:
 
     #Artificial Intelligence        
     def minmax(self, board, player, depth):
-    #Function to help determine the best move for the robot to perform   
+        """Function to help determine the best move for the robot to perform"""   
         
         #Debug:
         #board.drawBoardState()
@@ -332,8 +332,9 @@ class Game:
 
 
     def evaluation_function(self, board, currPlayer):
-    #Function evaluates the board state and returns a score
-    #Different weights are given to number of pieces, kings and their positioning
+        """Function evaluates the board state and returns a score
+        Different weights are given to number of pieces, kings and their positioning"""
+        
         black_kings, black_home_half, black_opp_half = 0,0,0
         white_kings, white_home_half, white_opp_half = 0,0,0 
         blackAttacks, whiteAttacks = 0,0
@@ -421,6 +422,7 @@ class Board:
             self.Kings[1] = kingWhite
                       
     def boardMove(self, move_info, currPlayer):
+        """Function performs a move and returns true if a king was created"""
         move = [move_info.start, move_info.end]
         
         jump = move_info.jump      
@@ -454,7 +456,7 @@ class Board:
 
 
     def calcLegalMoves(self, player): 
-        #Creates an array containing all legal moves and returns it
+        """Function creates an array containing all legal moves and returns it"""
         
         legalMoves = []
         
@@ -479,7 +481,7 @@ class Board:
 
     
     def legalMoves(self, pieces, kings, direction):
-    #Function determines the legal moves and returns it in an array
+        """Function determines the legal moves and returns it in an array"""
     
         legalMoves = []
         
@@ -543,8 +545,8 @@ class Board:
             
             #Kings' legal moves: 
         
-        #If direction was set downards previously, it is changed upwards
-        #All the parameters influenced by the direction are changed accordingly        
+        """If direction was set downards previously, it is changed upwards
+        All the parameters influenced by the direction are changed accordingly"""        
         if direction == 1:
             direction = 0
             boardLimit = 0
@@ -604,8 +606,8 @@ class Board:
     
     
     def checkJump(self, cell, isLeft, direction, enemy):
-    #Function determines the jumps legal to be made by a piece and returns it
-    #in an array
+        """Function determines the jumps legal to be made by a piece and returns it
+        in an array"""
     
         jumps = []
         next = -1 if direction == 0 else 1
@@ -675,7 +677,8 @@ class Board:
     
     
     def checkKing(self, move, player):
-    #Function sets and carries king status of pieces   
+       """Function sets and carries king status of pieces"""   
+    
        #cell[row,col]
        
        #Determines player's board limit
@@ -699,7 +702,7 @@ class Board:
     
    
     def calcPos(self, player):
-    #Function scans through the board and returns all the pieces belonging to the player
+        """Function scans through the board and returns all the pieces belonging to the player"""
         pos = []
 
         for row in range(BOARD_SIZE):
@@ -711,7 +714,7 @@ class Board:
          
     def drawBoardState(self):
         """
-        Draws and updates board to terminal
+        Function draws and updates board to terminal
         """
         x = 0
         print ("")
@@ -730,7 +733,7 @@ class Board:
         print ("0  1  2  3  4  5  6  7")
         
     def setDefaultBoard(self):
-        # reset board
+        """Function resets board"""
         # -1 = empty, 0=black, 1=white
         self.boardState = [
             [-1,1,-1,1,-1,1,-1,1],
